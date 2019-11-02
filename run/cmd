@@ -15,7 +15,7 @@ __success() {
 }
 
 __info() {
-	if [[ -z $2 ]]; then
+	if [ -z $2 ]; then
 		printf "\e[37m%s\e[0m\n" "$1"
 	else
 		printf "\e[1;37m%s: \e[0;37m%s\e[0m\n" "$1" "$2"
@@ -96,6 +96,7 @@ case "$1" in
 			
 			if [ -z "$APP_DOMAIN" ]; then
 				__error "Variable APP_DOMAIN should be defined in .env file"
+				exit 0
 			fi
 
 			__info "Url" "http://$APP_DOMAIN/"
