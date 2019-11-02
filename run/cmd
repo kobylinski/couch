@@ -62,7 +62,7 @@ export CURRENT_UID="$(id -u):$(id -g)"
 # Free port for http service
 export HTTP_PORT=$(get_free_port 8080) 
 
-if [[ -z "$1" ]]; then
+if [ -z "$1" ]; then
 	__error "Missing command"
 	__example "services/run [env:up|env:down|env:build]"
 	exit 1;
@@ -81,7 +81,7 @@ case "$1" in
 		fi
 		
 		# Running through traefic or available locally
-		if [[ -z $(docker ps -q --filter "name=^/gateway$") ]]; then
+		if [ -z $(docker ps -q --filter "name=^/gateway$") ]; then
 			
 			__warning "Missing gateway proxy"
 			__info "Url" "http://localhost:$HTTP_PORT/"
@@ -89,12 +89,12 @@ case "$1" in
 
 		else
 			
-			if [[ -z "$PROXY_NAME" ]]; then
+			if [ -z "$PROXY_NAME" ]; then
 				__error "Variable PROXY_NAME should be defined in .env file"
 				exit 0
 			fi
 			
-			if [[ -z "$APP_DOMAIN" ]]; then
+			if [ -z "$APP_DOMAIN" ]; then
 				__error "Variable APP_DOMAIN should be defined in .env file"
 			fi
 
