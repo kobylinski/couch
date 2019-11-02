@@ -83,7 +83,6 @@ case "$1" in
 		
 		# Running through traefic or available locally
 		if [ -z $(docker ps -q --filter "name=^/gateway$") ]; then
-			
 			__warning "Missing gateway proxy"
 			__info "Url" "http://localhost:$HTTP_PORT/"
 			docker-compose up -d
@@ -101,7 +100,7 @@ case "$1" in
 			fi
 
 			__info "Url" "http://$APP_DOMAIN/"
-			docker-compose up -d --force-recreate -f run/proxy.yml
+			docker-compose up -d --force-recreate -f docker-compose.yml -f run/proxy.yml
 		fi
 		;;
 	env:down)
