@@ -111,7 +111,10 @@ case "$1" in
 	env:build)
 		docker-compose build
 		;;
-	install)
+	vue:install)
 		docker-compose -f run/cli.yml run node npm install --prefix /app
+		;;
+	vue:build)
+		docker-compose -f run/cli.yml run node npm run build --prefix /app
 		;;
 esac
