@@ -101,7 +101,7 @@ case "$1" in
 			fi
 
 			__info "Url" "http://$APP_DOMAIN/"
-			docker-compose up -d -f run/proxy.yml
+			docker-compose up -d --force-recreate -f run/proxy.yml
 		fi
 		;;
 	env:down)
