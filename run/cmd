@@ -29,8 +29,18 @@ __example() {
 # Find free port starting from $1
 get_free_port(){
 	netstat -aln | awk -v start="$1" '
-	 	$6 == "LISTEN" { if ($4 ~ "[.:][0-9]+$") { split($4, a, /[:.]/); port = a[length(a)]; p[port] = 1 } }
-		END { for (i = start; i < 65000 && p[i]; i++){}; if (i == 65000) {exit 1}; print i }
+	 	$6 == "LISTEN" { 
+	 		if ($4 ~ "[.:][0-9]+$") { 
+	 			al = split($4, a, /[:.]/); 
+ 				port = a[al]; 
+ 				p[port] = 1
+	 		} 
+	 	}
+		END { 
+			for (i = start; i < 65000 && p[i]; i++){}; 
+			if (i == 65000) {exit 1}; 
+			print i 
+		}
 	'
 }
 
