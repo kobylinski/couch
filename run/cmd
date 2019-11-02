@@ -1,0 +1,101 @@
+#!/bin/sh
+
+set -e
+
+__warning() {
+	printf "\e[1;93mWarning:\e[0;93m %s\e[0m\n" "$1"
+}
+
+__error() {
+	printf "\e[1;31mError:\e[0;31m %s\e[0m\n" "$1"
+}
+
+__success() {
+	printf "\e[1;92mSuccess\e[0;92m %s\e[0m\n" "$1"
+}
+
+__info() {
+	if [[ -z $2 ]]; then
+		printf "\e[37m%s\e[0m\n" "$1"
+	else
+		printf "\e[1;37m%s: \e[0;37m%s\e[0m\n" "$1" "$2"
+	fi
+}
+
+__example() {
+	printf "\e[1m$ \e[0m%s\n" "$1"
+}
+
+# Find free port starting from $1
+get_free_port(){
+	netstat -aln | awk -v start="$1" '
+	 	$6 == "LISTEN" { if ($4 ~ "[.:][0-9]+$") { split($4, a, /[:.]/); port = a[length(a)]; p[port] = 1 } }
+		END { for (i = start; i < 65000 && p[i]; i++){}; if (i == 65000) {exit 1}; print i }
+	'
+}
+
+dot_env(){
+	set -a
+	[ -f .env ] && . .env
+	set +a
+}
+
+# Services root
+export PROJECT_DIR=$( cd "$(dirname "$0")/../" ; pwd -P )
+
+# Document root
+export APP_DIR=$( cd "$PROJECT_DIR/dist/" ; pwd -P )
+
+if [ ! -d "$APP_DIR" ]; then
+	__error "Build project first"
+	__example "npm run build"
+	exit 0
+fi
+
+# Map current user to docker user
+export CURRENT_UID="$(id -u):$(id -g)"
+
+# Free port for http service
+export HTTP_PORT=$(get_free_port 8080) 
+
+if [[ -z "$1" ]]; then
+	__error "Missing command"
+	__example "services/run [env:up|env:down|env:build]"
+	exit 1;
+fi
+
+cd $PROJECT_DIR
+dot_env
+
+case "$1" in
+	env:up)
+		
+		# Running through traefic or available locally
+		if [[ -z $(docker ps -q --filter "name=^/gateway$") ]]; then
+			
+			__warning "Missing gateway proxy"
+			__info "Url" "http://localhost:$HTTP_PORT/"
+			docker-compose up -d
+
+		else
+			
+			if [[ -z "$PROXY_NAME" ]]; then
+				__error "Variable PROXY_NAME should be defined in .env file"
+				exit 0
+			fi
+			
+			if [[ -z "$APP_DOMAIN" ]]; then
+				__error "Variable APP_DOMAIN should be defined in .env file"
+			fi
+
+			__info "Url" "http://$APP_DOMAIN/"
+			docker-compose up -d -f run/proxy.yml
+		fi
+		;;
+	env:down)
+		docker-compose down
+		;;
+	env:logs)
+		docker-compose logs -f
+		;;
+esac

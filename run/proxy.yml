@@ -1,0 +1,15 @@
+version: '3'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.frontend.rule=Host:${APP_DOMAIN}'
+      - 'traefik.frontend.entryPoints=https'
+      - 'traefik.protocol=http'
+      - 'traefik.port=${HTTP_PORT}'
+      - 'traefik.docker.network=proxy_gateway'
+    networks:
+      - gateway
+
+networks:
+  gateway:
+    external:
+      name: ${PROXY_NAME}_gateway

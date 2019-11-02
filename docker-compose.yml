@@ -1,0 +1,17 @@
+version: '3'
+services:
+  http:
+    build: ./run/http
+    restart: always
+    hostname: ${APP_NAME}-http
+    user: ${CURRENT_UID}
+    env_file:
+      - ./.env
+    volumes:
+      - ./run/http/nginx.conf:/etc/nginx/nginx.conf
+      - ./run/http/default.conf:/etc/nginx/conf.d/default.conf
+      - ${APP_DIR}:/app
+    ports:
+      - ${HTTP_PORT}:8080
+    networks:
+      - default
