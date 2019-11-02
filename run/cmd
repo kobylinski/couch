@@ -108,6 +108,9 @@ case "$1" in
 	env:logs)
 		docker-compose logs -f
 		;;
+	env:build)
+		docker-compose build
+		;;
 	install)
 		docker-compose -f run/cli.yml run node npm install --prefix /app
 		;;

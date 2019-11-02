@@ -1,7 +1,7 @@
 version: '3'
 services:
   node:
-    image: node:13-alpine
+    build: ./node
     restart: always
     working_dir: ${PROJECT_DIR}
     user: ${CURRENT_UID}
