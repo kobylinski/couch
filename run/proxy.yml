@@ -1,4 +1,6 @@
 version: '3'
+services:
+  http:
     labels:
       - 'traefik.enable=true'
       - 'traefik.frontend.rule=Host:${APP_DOMAIN}'

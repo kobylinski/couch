@@ -46,12 +46,6 @@ export PROJECT_DIR=$( cd "$(dirname "$0")/../" ; pwd -P )
 # Document root
 export APP_DIR=$( cd "$PROJECT_DIR/dist/" ; pwd -P )
 
-if [ ! -d "$APP_DIR" ]; then
-	__error "Build project first"
-	__example "npm run build"
-	exit 0
-fi
-
 # Map current user to docker user
 export CURRENT_UID="$(id -u):$(id -g)"
 
@@ -69,6 +63,12 @@ dot_env
 
 case "$1" in
 	env:up)
+
+		if [ ! -d "$APP_DIR" ]; then
+			__error "Build project first"
+			__example "npm run build"
+			exit 0
+		fi
 		
 		# Running through traefic or available locally
 		if [[ -z $(docker ps -q --filter "name=^/gateway$") ]]; then
@@ -97,5 +97,8 @@ case "$1" in
 		;;
 	env:logs)
 		docker-compose logs -f
+		;;
+	install)
+		docker-compose -f run/cli.yml run node npm install --prefix /app
 		;;
 esac
