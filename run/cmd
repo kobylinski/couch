@@ -54,7 +54,7 @@ dot_env(){
 export PROJECT_DIR=$( cd "$(dirname "$0")/../" ; pwd -P )
 
 # Document root
-export APP_DIR=$( cd "$PROJECT_DIR/dist/" ; pwd -P )
+export APP_DIR=$PROJECT_DIR/dist
 
 # Map current user to docker user
 export CURRENT_UID="$(id -u):$(id -g)"
