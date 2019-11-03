@@ -8,6 +8,7 @@ services:
       - 'traefik.protocol=http'
       - 'traefik.port=${HTTP_PORT}'
       - 'traefik.docker.network=proxy_gateway'
+      - 'traefik.http.redirect=https'
     networks:
       - gateway
 
@@ -15,3 +16,5 @@ networks:
   gateway:
     external:
       name: ${PROXY_NAME}_gateway
+  backend:
+    internal: true

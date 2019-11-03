@@ -93,7 +93,8 @@ case "$1" in
 		# Running through traefic or available locally
 		if [ -z $(docker ps -q --filter "name=^/gateway$") ]; then
 			__warning "Missing gateway proxy"
-			__info "Url" "http://localhost:$HTTP_PORT/"
+			__info "Http url" "http://localhost:$HTTP_PORT/"
+			__info "CouchDb url" "http://localhost:$COUCH_PORT/"
 			docker-compose up -d
 
 		else
