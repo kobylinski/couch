@@ -15,7 +15,7 @@ __success() {
 }
 
 __info() {
-	if [ -z $2 ]; then
+	if [ -z "$2" ]; then
 		printf "\e[37m%s\e[0m\n" "$1"
 	else
 		printf "\e[1;37m%s: \e[0;37m%s\e[0m\n" "$1" "$2"
@@ -24,6 +24,81 @@ __info() {
 
 __example() {
 	printf "\e[1m$ \e[0m%s\n" "$1"
+}
+
+__defined() {
+	if [ -z "$1" ]; then
+		__error "$2"
+		if [ ! -z "$3" ]; then
+			__example "$3" "$4"
+		fi
+		exit 0
+	fi
+}
+
+__help(){
+	__info "------------------------------------------"
+	__info "Project management tool"
+	__info "------------------------------------------"
+	__info
+	__info "Docker containers" "run/cmd env:*"
+	__example "env:up"
+	__example "env:down"
+	__example "env:logs"
+	__example "env:bash <container_name>"
+	__example "env:build"
+	__info
+	__info "Frontend assets" "run/cmd vue:*"
+	__example "vue:install (npm install)"
+	__example "vue:build (npm run build)"
+	__info
+	__info "Couch database" "run/cmd couch:*"
+	__example "couch:get <path> (perform get request)"
+	__example "couch:setup (perform setup requests)"
+	__example "couch:user <name> (get user document)"
+	__example "couch:user:create <name> <password> <role>"
+	__example "couch:user:update <name> <password> <role>"
+	__example "couch:user:delete <name>"
+}
+
+couch_get(){
+	local path=${1/\//}
+	docker-compose exec couch curl -u $COUCH_USER:$COUCH_PASSWORD -X GET http://localhost:5984/$path
+}
+
+couch_put(){
+	local path=${1/\//}; shift
+	if [ -z "$1" ]; then
+		docker-compose exec couch curl -u $COUCH_USER:$COUCH_PASSWORD -X PUT http://localhost:5984/$path
+	else
+		local request_body=$1; shift
+		docker-compose exec couch curl -u $COUCH_USER:$COUCH_PASSWORD -X PUT \
+			-H "Accept: application/json" \
+			-H "Content-Type: application/json" \
+			-d "$request_body" \
+			"$@" "http://localhost:5984/$path"
+	fi
+}
+
+couch_delete(){
+	local path=${1/\//}
+	local rev=$(couch_revision $1)
+
+	docker-compose exec couch curl -u $COUCH_USER:$COUCH_PASSWORD -X DELETE \
+		-H "If-Match: $rev" \
+		"http://localhost:5984/$path"
+}
+
+couch_revision(){
+	local rev=$(couch_get $1 | tr ',' '\n' | grep _rev | awk -F":" '{print $2}')
+	if [ -z "$rev" ]; then
+		__error "Document $1 not found"
+		exit 0
+	fi
+
+	rev="${rev%\"}"
+	rev="${rev#\"}"
+	echo $rev
 }
 
 # Find free port starting from $1
@@ -58,8 +133,8 @@ export HTTP_PORT=$(get_free_port 8080)
 
 if [ -z "$1" ]; then
 	__error "Missing command"
-	__example "run/cmd [env:up|env:down|env:build|env:logs|vue:install|vue:build]"
-	exit 1;
+	__help
+	exit 0;
 fi
 
 cd $PROJECT_DIR
@@ -82,8 +157,10 @@ export COUCH_HOST=$APP_NAME-couch
 export COUCH_PORT=$(get_free_port 5984)
 
 case "$1" in
+	help)
+		__help
+		;;
 	env:up)
-
 		if [ ! -d "$APP_DIR" ]; then
 			__error "Build project first"
 			__example "npm run build"
@@ -98,17 +175,8 @@ case "$1" in
 			docker-compose up -d
 
 		else
-			
-			if [ -z "$PROXY_NAME" ]; then
-				__error "Variable PROXY_NAME should be defined in .env file"
-				exit 0
-			fi
-			
-			if [ -z "$APP_DOMAIN" ]; then
-				__error "Variable APP_DOMAIN should be defined in .env file"
-				exit 0
-			fi
-
+			__defined "$PROXY_NAME" "Variable PROXY_NAME should be defined in .env file"
+			__defined "$APP_DOMAIN" "Variable APP_DOMAIN should be defined in .env file"
 			__info "Url" "http://$APP_DOMAIN/"
 			docker-compose -f docker-compose.yml -f run/proxy.yml up -d
 		fi
@@ -123,6 +191,7 @@ case "$1" in
 		docker-compose build
 		;;
 	env:bash)
+		__defined "$2" "Missing container name" "run/cmd env:bash <container_name>"
 		docker-compose exec $2 bash
 		;;
 	vue:install)
@@ -130,5 +199,47 @@ case "$1" in
 		;;
 	vue:build)
 		docker-compose -f run/cli.yml run node npm run build --prefix /app
+		;;
+	couch:get)
+		__defined "$2" "Missing resource path" "run/cmd couch:get <resource_path>"
+		couch_get "$2"
+		;;
+	couch:setup)
+		couch_put _users
+		couch_put _replicator
+		couch_put _global_changes
+		;;
+	couch:user)
+		__defined "$2" "Missing username" "run/cmd couch:user <username>"
+		couch_get "_users//org.couchdb.user:$2"
+		;;
+	couch:user:create)
+		__defined "$2" "Missing username" "run/cmd couch:user:create <username> <password> <role>"
+		__defined "$3" "Missing password" "run/cmd couch:user:create <username> <password> <role>"
+		
+		role=''
+		if [ ! -z $4 ]; then
+			role='"'$4'"'
+		fi
+
+		couch_put "_users//org.couchdb.user:$2" '{"name":"'$2'", "password":"'$3'", "roles":['$role'], "type":"user"}'
+		;;
+	couch:user:update)
+		__defined "$2" "Missing username" "run/cmd couch:user:update <username> <password> <role>"
+		__defined "$3" "Missing password" "run/cmd couch:user:update <username> <password> <role>"
+
+		role=''
+		if [ ! -z $4 ]; then
+			role='"'$4'"'
+		fi
+
+		user_rev=$(couch_revision "_users//org.couchdb.user:$2")
+		
+		__info "User revision" $user_rev
+		couch_put "_users//org.couchdb.user:$2" '{"name":"'$2'", "password":"'$3'", "roles":['$role'], "type":"user"}' -H "If-Match: $user_rev"
+		;;
+	couch:user:delete)
+		__defined "$2" "Missing username" "run/cmd couch:user:delete <username>"
+		couch_delete "_users//org.couchdb.user:$2"
 		;;
 esac

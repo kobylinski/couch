@@ -4,7 +4,7 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.frontend.rule=Host:${APP_DOMAIN}'
-      - 'traefik.frontend.entryPoints=https'
+      - 'traefik.frontend.entryPoints=http,https'
       - 'traefik.protocol=http'
       - 'traefik.port=${HTTP_PORT}'
       - 'traefik.docker.network=proxy_gateway'
