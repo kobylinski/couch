@@ -72,6 +72,15 @@ else
 	exit 0
 fi
 
+# Nginx hostname
+export HTTP_HOST=$APP_NAME-http
+
+# Couchdb hostname
+export COUCH_HOST=$APP_NAME-couch
+
+# Couchdb port
+export COUCH_PORT=$(get_free_port 5984)
+
 case "$1" in
 	env:up)
 
@@ -111,6 +120,9 @@ case "$1" in
 		;;
 	env:build)
 		docker-compose build
+		;;
+	env:bash)
+		docker-compose exec $2 bash
 		;;
 	vue:install)
 		docker-compose -f run/cli.yml run node npm install --prefix /app

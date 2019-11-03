@@ -3,15 +3,35 @@ services:
   http:
     build: ./run/http
     restart: always
-    hostname: ${APP_NAME}-http
+    container_name: ${HTTP_HOST}
     user: ${CURRENT_UID}
     env_file:
       - ./.env
     volumes:
-      - ./run/http/nginx.conf:/etc/nginx/nginx.conf
-      - ./run/http/default.conf:/etc/nginx/conf.d/default.conf
       - ${APP_DIR}:/app
     ports:
       - ${HTTP_PORT}:8080
+    networks:
+      - default
+    depends_on:
+      - couch
+    links:
+      - couch
+    environment:
+      - COUCH_HOST=${COUCH_HOST}
+      - COUCH_PORT=${COUCH_PORT}
+  couch:
+    image: apache/couchdb:2.3.1
+    restart: always
+    container_name: ${COUCH_HOST}
+    user: ${CURRENT_UID}
+    ports:
+      - ${COUCH_PORT}:5984
+    volumes:
+      - ./run/couch/data:/opt/couchdb/data
+      - ./run/couch/chttpd.ini:/opt/couchdb/etc/local.d/chttpd.ini
+    environment:
+      - COUCHDB_PASSWORD=${COUCH_PASSWORD}
+      - COUCHDB_USER=${COUCH_USER}
     networks:
       - default
