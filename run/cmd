@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -290,7 +290,7 @@ case "$1" in
 		;;
 	couch:db)
 		IFS=','; read -ra dbs <<< $(couch_get _all_dbs | sed -En "s/\[(.*)\]/\1/p"); unset IFS;
-		for db in $dbs
+		for db in "${dbs[@]}"
 		do
 			__bullet $( echo "$db" | sed -En 's/\"//pg' )
 		done
