@@ -52,11 +52,6 @@ RxDB.create({
 		migrationStrategies: {
 		},
 		pouchSettings:{
-			fetch: ( url, opts ) => {
-				opts.headers.set( 'X-Forwarder-Proto', document.location.protocol.replace(':', '') );
-				console.log( url, opts );
-				return PouchDb.fetch( url, opts )
-			}
 		}
 	} ).then( col => {
 
