@@ -135,7 +135,10 @@ export APP_DIR=$PROJECT_DIR/dist
 export CURRENT_UID="$(id -u):$(id -g)"
 
 # Free port for http service
-export HTTP_PORT=$(get_free_port 8080) 
+export HTTP_PORT=$(get_free_port 8080)
+
+# Free port for node app (only development environment)
+export NODE_PORT=$(get_free_port $(( $HTTP_PORT + 1 )))
 
 if [ -z "$1" ]; then
 	__error "Missing command"
@@ -158,6 +161,9 @@ export HTTP_HOST=$APP_NAME-http
 
 # Couchdb hostname
 export COUCH_HOST=$APP_NAME-couch
+
+# Node container name
+export NODE_HOST=$APP_NAME-node
 
 # Couchdb port
 export COUCH_PORT=$(get_free_port 5984)
@@ -201,10 +207,15 @@ case "$1" in
 		docker-compose exec $2 bash
 		;;
 	vue:install)
-		docker-compose -f run/cli.yml run node npm install --prefix /app
+		shift
+		docker-compose -f run/cli.yml run node npm install "$@"
 		;;
 	vue:build)
-		docker-compose -f run/cli.yml run node npm run build --prefix /app
+		docker-compose -f run/cli.yml run node npm run build 
+		;;
+	vue:serve)
+		__info "Development url" "http://localhost:$NODE_PORT/"
+		docker-compose -f run/cli.yml up node
 		;;
 	couch:get)
 		__defined "$2" "Missing resource path" "run/cmd couch:get <resource_path>"

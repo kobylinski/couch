@@ -2,12 +2,7 @@
 
 import { register } from 'register-service-worker'
 
-alert('bazinga?');
-
 if (process.env.NODE_ENV === 'production') {
-
-  alert( 'bazinga!' );
-
   register(`${process.env.BASE_URL}service-worker.js`, {
     ready () {
       console.log(

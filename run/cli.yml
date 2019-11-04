@@ -3,8 +3,16 @@ services:
   node:
     build: ./node
     restart: always
-    working_dir: ${PROJECT_DIR}
+    container_name: ${NODE_HOST}
+    working_dir: /app
     user: ${CURRENT_UID}
+    command: npm run serve
+    ports:
+      - ${NODE_PORT}:8080
     volumes: 
       - ${PROJECT_DIR}:/app
       - ${PROJECT_DIR}/run/node/.npm:/.npm
+    networks:
+      - default
+    environment:
+      - NODE_PORT=${NODE_PORT}
