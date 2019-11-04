@@ -4,6 +4,7 @@ services:
     build: ./node
     restart: always
     container_name: ${NODE_HOST}
+    privileged: true
     working_dir: /app
     user: ${CURRENT_UID}
     command: npm run serve
