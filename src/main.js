@@ -9,11 +9,11 @@ import PouchdbAdapterHttp from 'pouchdb-adapter-http';
 import PouchdbAdapterIdb from 'pouchdb-adapter-idb';
 
 PouchDb.plugin( PouchAuth );
-PouchDb.plugin( { 
-	getUrl(){
-		return 'http://localhost:5984';
-	}
-});
+// PouchDb.plugin( { 
+// 	getUrl(){
+// 		return 'http://localhost:5984';
+// 	}
+// });
 
 RxDB.plugin( PouchdbAdapterIdb );
 RxDB.plugin( PouchdbAdapterHttp );
