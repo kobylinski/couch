@@ -211,7 +211,8 @@ case "$1" in
 		docker-compose -f run/cli.yml run node npm install "$@"
 		;;
 	vue:build)
-		docker-compose -f run/cli.yml run node npm run build 
+		shift
+		docker-compose -f run/cli.yml run node npm run build "$@"
 		;;
 	vue:serve)
 		__info "Development url" "http://localhost:$NODE_PORT/"
