@@ -26,6 +26,10 @@ __example() {
 	printf "\e[1m$ \e[0m%s\n" "$1"
 }
 
+__bullet(){
+	printf "\e[1m* \e[0m%s\n" "$1"
+}
+
 __defined() {
 	if [ -z "$1" ]; then
 		__error "$2"
@@ -59,6 +63,8 @@ __help(){
 	__example "couch:user:create <name> <password> <role>"
 	__example "couch:user:update <name> <password> <role>"
 	__example "couch:user:delete <name>"
+	__example "couch:db:create <database_name> [-a <admin_roles1> ... [-m <member_role1> ...]]"
+	__example "couch:db (list all defined databases)"
 }
 
 couch_get(){
@@ -134,7 +140,7 @@ export HTTP_PORT=$(get_free_port 8080)
 if [ -z "$1" ]; then
 	__error "Missing command"
 	__help
-	exit 0;
+	exit 0
 fi
 
 cd $PROJECT_DIR
@@ -241,5 +247,52 @@ case "$1" in
 	couch:user:delete)
 		__defined "$2" "Missing username" "run/cmd couch:user:delete <username>"
 		couch_delete "_users//org.couchdb.user:$2"
+		;;
+	couch:db:create)
+		__defined "$2" "Missing database name" "run/cmd couch:db:create <database_name> [-a <admin_roles1> ... [-m <member_role1> ...]]"
+		path="$2"; shift; shift
+		type=''
+		admins=()
+		members=()
+		for attr in "$@"
+		do
+			case "$attr" in
+				-a)
+					type="admins"
+					;;
+				-m)
+					type="members"
+					;;
+				*)
+					if [[ ${attr:0:1} == '-' ]]; then
+						type=''
+					else
+						case "$type" in
+							admins)
+								admins+=("$attr")
+								;;
+							members)
+								members+=("$attr")
+								;;
+						esac
+					fi
+					;;
+			esac
+		done
+
+		admins_=$(printf '"%s",' "${admins[@]}")
+		admins_=${admins_%,}
+		members_=$(printf '"%s",' "${members[@]}")
+		members_=${members_%,}
+
+		couch_put "$path"
+		couch_put "$path//_security" '{"admins":{"names":[],"roles":['$admins_']},"members":{"names": [],"roles": ['$members_']}}'
+		;;
+	couch:db)
+		IFS=','; read -ra dbs <<< $(couch_get _all_dbs | sed -En "s/\[(.*)\]/\1/p"); unset IFS;
+		for db in $dbs
+		do
+			__bullet $( echo "$db" | sed -En 's/\"//pg' )
+		done
 		;;
 esac
